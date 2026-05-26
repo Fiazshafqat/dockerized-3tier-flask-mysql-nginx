@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: devops
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./message.sql:/docker-entrypoint-initdb.d/message.sql
+    networks:
+      - flask-net
+    restart: always
+
+  flask-app:
+    build:
+      context: .
+    container_name: flask-app
+    expose:
+      - "5000"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_DB: devops
+    depends_on:
+      - mysql
+    networks:
+      - flask-net
+    restart: always
+
+  nginx:
+    build:
+      context: ./ngnix
+    container_name: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - flask-app
+    networks:
+      - flask-net
+    restart: always
+
+networks:
+  flask-net:
